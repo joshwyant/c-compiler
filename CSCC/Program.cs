@@ -19,7 +19,14 @@ var nonFlags = new List<string>();
 var verbose = false;
 var headerShown = false;
 var versionShown = false;
+var cts = new CancellationTokenSource();
 Token[] tokens = [];
+
+Console.CancelKeyPress += (sender, eventArgs) =>
+{
+    eventArgs.Cancel = true; // Don't terminate yet
+    cts.Cancel(); // Use our cancellation token instead
+};
 
 try
 {
@@ -33,7 +40,7 @@ try
 
     //
     // Step 1: Invoke preprocessor
-    (preprocessedFileName, status) = await PreprocessAsync(sourceFileName, programName);
+    (preprocessedFileName, status) = await PreprocessAsync(sourceFileName, programName, cts.Token);
     if (status != Success || preprocessedFileName == null)
     {
         Environment.Exit((int)status);
@@ -41,7 +48,7 @@ try
 
     //
     // Step 2: Compile the program
-    (assembledFileName, status) = await CompileAsync(preprocessedFileName, programName);
+    (assembledFileName, status) = await CompileAsync(preprocessedFileName, programName, cts.Token);
     if (status != Success || assembledFileName == null)
     {
         Environment.Exit((int)status);
@@ -57,7 +64,7 @@ try
 
     //
     // Step 3: Assemble and link
-    status = await AssembleAsync(assembledFileName, programName);
+    status = await AssembleAsync(assembledFileName, programName, cts.Token);
     if (status != Success)
     {
         Environment.Exit((int)status);
@@ -72,7 +79,7 @@ catch (Exception e)
     Error(UnknownError, $"Unhandled exception: {e}", exit: true);
 }
 
-async Task<(string? preprocessedFileName, ProgramStatus)> PreprocessAsync(string sourceFileName, string programName)
+async Task<(string? preprocessedFileName, ProgramStatus)> PreprocessAsync(string sourceFileName, string programName, CancellationToken cancellationToken = default)
 {
     var preprocessedFileName = $"{programName}.i";
     var program = "gcc";
@@ -98,7 +105,7 @@ async Task<(string? preprocessedFileName, ProgramStatus)> PreprocessAsync(string
         return (null, Error(ProcessFail, "Failed to invoke the preprocessor."));
     }
 
-    await preprocessor.WaitForExitAsync();
+    await preprocessor.WaitForExitAsync(cancellationToken);
 
     if (preprocessor.ExitCode != 0)
     {
@@ -108,12 +115,12 @@ async Task<(string? preprocessedFileName, ProgramStatus)> PreprocessAsync(string
     return (preprocessedFileName, Success);
 }
 
-async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string preprocessedFileName, string programName)
+async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string preprocessedFileName, string programName, CancellationToken cancellationToken = default)
 {
     var assembledFileName = string.Empty;
 
     // Perform lexical analysis
-    var status = await LexAsync(preprocessedFileName);
+    var status = await LexAsync(preprocessedFileName, cancellationToken);
     // --lex flag means stop after lexing.
     if (status != Success || programFlags.HasFlag(StopAfterLex))
     {
@@ -121,7 +128,7 @@ async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string prepr
     }
 
     // Now parse
-    status = await ParseAsync();
+    status = await ParseAsync(cancellationToken);
     // --parse flag means stop after parsing.
     if (status != Success || programFlags.HasFlag(StopAfterParse))
     {
@@ -129,7 +136,7 @@ async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string prepr
     }
 
     // TODO: Now perform code generation
-    status = await CodeGenAsync();
+    status = await CodeGenAsync(cancellationToken);
     // --codegen flag means stop after parsing.
     if (status != Success || programFlags.HasFlag(StopAfterCodeGen))
     {
@@ -137,10 +144,10 @@ async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string prepr
     }
 
     // TODO: Now generate assembly file
-    return await EmitAsync(programName);
+    return await EmitAsync(programName, cancellationToken);
 }
 
-async Task<ProgramStatus> LexAsync(string preprocessedFileName)
+async Task<ProgramStatus> LexAsync(string preprocessedFileName, CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Performing lexical analysis...");
 
@@ -149,7 +156,7 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName)
         var lexer = new Lexer(preprocessedFileName);
 
         // No streaming in v1 to simplify debugging.
-        tokens = await lexer.ToArrayAsync();
+        tokens = await lexer.ToArrayAsync(cancellationToken);
 
         if (verbose)
         {
@@ -179,7 +186,7 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName)
     return Success;
 }
 
-Task<ProgramStatus> ParseAsync()
+Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Parsing...");
 
@@ -188,7 +195,7 @@ Task<ProgramStatus> ParseAsync()
     return Task.FromResult(Success);
 }
 
-Task<ProgramStatus> CodeGenAsync()
+Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Generating code...");
 
@@ -197,7 +204,7 @@ Task<ProgramStatus> CodeGenAsync()
     return Task.FromResult(Success);
 }
 
-async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName)
+async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Generating assembly...");
 
@@ -208,7 +215,7 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
     try
     {
         if (verbose) Console.WriteLine($"Creating {assembledFileName}...");
-        await File.WriteAllTextAsync(assembledFileName, string.Empty);
+        await File.WriteAllTextAsync(assembledFileName, string.Empty, cancellationToken);
     }
     catch
     {
@@ -233,7 +240,7 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
     return (status == Success ? assembledFileName : null, status);
 }
 
-async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName)
+async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName, CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Assembling and linking...");
 
@@ -258,7 +265,7 @@ async Task<ProgramStatus> AssembleAsync(string assembledFileName, string program
             return Error(ProcessFail, "Failed to invoke gcc to run assembler.");
         }
 
-        await gcc.WaitForExitAsync();
+        await gcc.WaitForExitAsync(cancellationToken);
 
         if (gcc.ExitCode != 0)
         {
