@@ -1,0 +1,6 @@
+#!/bin/bash
+
+WORKSPACE_DIR=$(pwd)/..
+
+cd ../../writing-a-c-compiler-tests
+./test_compiler $WORKSPACE_DIR/CSCC/bin/Debug/net8.0/CSCC "$@"
