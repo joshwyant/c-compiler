@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Security;
+using CSCC;
+using CSCC.Lexing;
 using static ProgramFlags;
 using static ProgramStatus;
 
@@ -17,6 +19,7 @@ var nonFlags = new List<string>();
 var verbose = false;
 var headerShown = false;
 var versionShown = false;
+Token[] tokens = [];
 
 try
 {
@@ -59,6 +62,10 @@ try
     {
         Environment.Exit((int)status);
     }
+}
+catch (CompilerErrorException e)
+{
+    Error(CompilerError, e.Message);
 }
 catch (Exception e)
 {
@@ -133,17 +140,29 @@ async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string prepr
     return await EmitAsync(programName);
 }
 
-Task<ProgramStatus> LexAsync(string preprocessedFileName)
+async Task<ProgramStatus> LexAsync(string preprocessedFileName)
 {
     if (verbose) Console.WriteLine("Performing lexical analysis...");
 
-    // TODO: Actually lexically analyze the source file
+    try
+    {
+        var lexer = new Lexer(preprocessedFileName);
 
-    // Finished with the preprocessed file
-    if (verbose) Console.WriteLine($"Deleting {preprocessedFileName}...");
-    File.Delete(preprocessedFileName);
+        // No streaming in v1 to simplify debugging.
+        tokens = await lexer.ToArrayAsync();
+    }
+    catch (IOException e)
+    {
+        return Error(IOError, $"IO Error occurred while lexing: {e.Message}");
+    }
+    finally
+    {
+        // Finished with the preprocessed file
+        if (verbose) Console.WriteLine($"Deleting {preprocessedFileName}...");
+        File.Delete(preprocessedFileName);
+    }
 
-    return Task.FromResult(Success);
+    return Success;
 }
 
 Task<ProgramStatus> ParseAsync()
@@ -181,18 +200,23 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
     {
         status = AssemblyFailed;
     }
-    if (status != Success)
+    finally
     {
-        try
+        if (status != Success)
         {
-            if (verbose) Console.WriteLine($"Deleting {assembledFileName}...");
-            if (File.Exists(assembledFileName)) File.Delete(assembledFileName);
+            try
+            {
+                if (verbose) Console.WriteLine($"Deleting {assembledFileName}...");
+                if (File.Exists(assembledFileName)) File.Delete(assembledFileName);
+            }
+            catch (Exception e)
+            {
+                if (verbose) Console.WriteLine($"Failed to delete {assembledFileName}: {e}");
+            }
         }
-        catch { }
-        return (null, status);
     }
 
-    return (assembledFileName, Success);
+    return (status == Success ? assembledFileName : null, status);
 }
 
 async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName)
@@ -238,10 +262,13 @@ async Task<ProgramStatus> AssembleAsync(string assembledFileName, string program
     {
         status = AssemblyFailed;
     }
-    if (status != Success && File.Exists(assembledFileName))
+    finally
     {
-        if (verbose) Console.WriteLine($"Deleting {assembledFileName}...");
-        File.Delete(assembledFileName);
+        if (status != Success && File.Exists(assembledFileName))
+        {
+            if (verbose) Console.WriteLine($"Deleting {assembledFileName}...");
+            File.Delete(assembledFileName);
+        }
     }
 
     return status;
@@ -468,4 +495,6 @@ enum ProgramStatus
     PreprocessorFailed,
     AssemblyFailed,
     ConflictingFlags,
+    CompilerError,
+    IOError,
 }
