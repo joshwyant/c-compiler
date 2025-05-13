@@ -150,6 +150,15 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName)
 
         // No streaming in v1 to simplify debugging.
         tokens = await lexer.ToArrayAsync();
+
+        if (lexer.Errors.Count != 0)
+        {
+            foreach (var error in lexer.Errors)
+            {
+                Console.Error.WriteLine($"Error: {error}");
+            }
+            return Error(CompilerError, "Lexical errors found");
+        }
     }
     catch (IOException e)
     {

@@ -11,8 +11,9 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
             "args": [
-                "bla.c",
-                "--verbose",
+                "/home/josh/src/writing-a-c-compiler-tests/tests/chapter_1/invalid_lex/at_sign.c",
+                "--lex",
+                // "--verbose",
             ],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
