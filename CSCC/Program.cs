@@ -151,6 +151,11 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName)
         // No streaming in v1 to simplify debugging.
         tokens = await lexer.ToArrayAsync();
 
+        if (verbose)
+        {
+            Console.WriteLine($"[{string.Join(", ", tokens.Select(t => $"\"{t}\""))}]");
+        }
+
         if (lexer.Errors.Count != 0)
         {
             foreach (var error in lexer.Errors)
