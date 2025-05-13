@@ -11,6 +11,29 @@
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        // 1. Clone https://github.com/nlsandler/writing-a-c-compiler-tests alongside this repo (parent dir)
+        // 2. Ctrl+Shift+P -> Run Task -> test
+        {
+            "label": "test",
+            "command": "${workspaceFolder}/../writing-a-c-compiler-tests/test_compiler",
+            "type": "process",
+            "dependsOn": [
+                "build"
+            ],
+            "args": [
+                "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
+                "--chapter",
+                "1",
+                "--stage",
+                "lex"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/../writing-a-c-compiler-tests"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
         }
     ]
 }
