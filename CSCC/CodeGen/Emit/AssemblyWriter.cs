@@ -1,22 +1,18 @@
 using System.CodeDom.Compiler;
-using System.Text;
+using System.Threading.Tasks;
 using CSCC.CodeGen.Syntax;
 using CSCC.CodeGen.Syntax.Instructions;
 
 namespace CSCC.CodeGen.Emit;
 
-class AssemblyWriter
+class AssemblyWriter(ProgramAsmNode program)
 {
-    readonly ProgramAsmNode program;
-    public AssemblyWriter(ProgramAsmNode program)
-    {
-        this.program = program;
-    }
+    readonly ProgramAsmNode program = program;
 
-    public void Write(string filename)
+    public async Task WriteAsync(string filename, CancellationToken token = default)
     {
         using var visitor = new AsmWriterVisitor(filename, program);
-        visitor.Write();
+        await visitor.WriteAsync(token);
     }
 
     class AsmWriterVisitor : AssemblyNodeVisitor, IDisposable
@@ -39,60 +35,60 @@ class AssemblyWriter
             writer.Dispose();
         }
 
-        public void Write()
+        public async Task WriteAsync(CancellationToken cancellationToken = default)
         {
-            Visit(program);
+            await VisitAsync(program, cancellationToken);
             if (OperatingSystem.IsLinux())
             {
-                indentedWriter.WriteLine();
-                indentedWriter.WriteLine(".section .note.GNU-stack,\"\",@progbits");
+                await indentedWriter.WriteLineAsync();
+                await indentedWriter.WriteLineAsync(".section .note.GNU-stack,\"\",@progbits".AsMemory(), cancellationToken);
             }
         }
 
-        protected override void VisitFunctionDefinition(FunctionDefinitionAsmNode func)
+        protected override async Task VisitFunctionDefinitionAsync(FunctionDefinitionAsmNode func, CancellationToken cancellationToken = default)
         {
             var funcName = OperatingSystem.IsMacOS() ? $"_{func.Name}" : func.Name;
 
-            indentedWriter.WriteLine($"# Function {func.Name}");
+            await indentedWriter.WriteLineAsync($"# Function {func.Name}".AsMemory(), cancellationToken);
             indentedWriter.Indent++;
-            indentedWriter.WriteLine($".globl {funcName}");
+            await indentedWriter.WriteLineAsync($".globl {funcName}".AsMemory(), cancellationToken);
             indentedWriter.Indent--;
-            indentedWriter.WriteLine($"{funcName}:");
+            await indentedWriter.WriteLineAsync($"{funcName}:".AsMemory(), cancellationToken);
             indentedWriter.Indent++;
             foreach (var instruction in func.Instructions)
             {
-                Visit(instruction);
+                await VisitAsync(instruction, cancellationToken);
             }
             indentedWriter.Indent--;
         }
 
-        protected override void VisitImmediate(ImmediateAsmNode imm)
+        protected override async Task VisitImmediateAsync(ImmediateAsmNode imm, CancellationToken cancellationToken = default)
         {
-            indentedWriter.Write($"${imm.Value}");
+            await indentedWriter.WriteAsync($"${imm.Value}".AsMemory(), cancellationToken);
         }
 
-        protected override void VisitMov(MovAsmNode mov)
+        protected override async Task VisitMovAsync(MovAsmNode mov, CancellationToken cancellationToken = default)
         {
-            indentedWriter.Write($"movl ");
-            Visit(mov.Source);
-            indentedWriter.Write(", ");
-            Visit(mov.Destination);
+            indentedWriter.Write($"movl ".AsMemory());
+            await VisitAsync(mov.Source, cancellationToken);
+            indentedWriter.Write(", ".AsMemory());
+            await VisitAsync(mov.Destination, cancellationToken);
             indentedWriter.WriteLine();
         }
 
-        protected override void VisitProgram(ProgramAsmNode program)
+        protected override async Task VisitProgramAsync(ProgramAsmNode program, CancellationToken cancellationToken = default)
         {
-            Visit(program.Function);
+            await VisitAsync(program.Function, cancellationToken);
         }
 
-        protected override void VisitRegister(RegisterAsmNode register)
+        protected override async Task VisitRegisterAsync(RegisterAsmNode register, CancellationToken cancellationToken = default)
         {
-            indentedWriter.Write("%eax");
+            await indentedWriter.WriteAsync("%eax".AsMemory(), cancellationToken);
         }
 
-        protected override void VisitRet(RetAsmNode ret)
+        protected override async Task VisitRetAsync(RetAsmNode ret, CancellationToken cancellationToken = default)
         {
-            indentedWriter.WriteLine("ret");
+            await indentedWriter.WriteLineAsync("ret".AsMemory(), cancellationToken);
         }
     }
 }

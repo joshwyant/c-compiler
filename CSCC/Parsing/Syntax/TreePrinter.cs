@@ -15,9 +15,9 @@ class TreePrinter
         this.visitor = new();
     }
 
-    string Print() => visitor.Print(node);
+    async Task<string> PrintAsync(CancellationToken cancellationToken = default) => await visitor.PrintAsync(node, cancellationToken);
 
-    public static string Print(ASTNode node) => new TreePrinter(node).Print();
+    public static async Task<string> PrintAsync(ASTNode node, CancellationToken cancellationToken = default) => await new TreePrinter(node).PrintAsync(cancellationToken);
 
     class TreePrinterVisitor : ASTNodeVisitor
     {
@@ -29,46 +29,46 @@ class TreePrinter
             indentedWriter = new(new StringWriter(sb), "    ");
         }
 
-        public string Print(ASTNode node)
+        public async Task<string> PrintAsync(ASTNode node, CancellationToken cancellationToken = default)
         {
-            Visit(node);
+            await VisitAsync(node, cancellationToken);
             var str = sb.ToString();
             sb.Clear();
             return str;
         }
 
-        public override void VisitConstant(ConstantExpressionNode node)
+        public override async Task VisitConstantAsync(ConstantExpressionNode node, CancellationToken cancellationToken = default)
         {
-            indentedWriter.WriteLine($"Constant({node.Constant})");
+            await indentedWriter.WriteLineAsync($"Constant({node.Constant})".AsMemory(), cancellationToken);
         }
 
-        public override void VisitFunction(FunctionDefinitionNode node)
+        public override async Task VisitFunctionAsync(FunctionDefinitionNode node, CancellationToken cancellationToken = default)
         {
-            indentedWriter.WriteLine("Function(");
+            await indentedWriter.WriteLineAsync("Function(".AsMemory(), cancellationToken);
             indentedWriter.Indent++;
-            indentedWriter.WriteLine($"name=\"{node.Name}\",");
-            indentedWriter.Write("body=");
-            Visit(node.Statement);
+            await indentedWriter.WriteLineAsync($"name=\"{node.Name}\",".AsMemory(), cancellationToken);
+            await indentedWriter.WriteAsync("body=".AsMemory(), cancellationToken);
+            await VisitAsync(node.Statement, cancellationToken);
             indentedWriter.Indent--;
-            indentedWriter.WriteLine(")");
+            await indentedWriter.WriteLineAsync(")".AsMemory(), cancellationToken);
         }
 
-        public override void VisitProgram(ProgramNode node)
+        public override async Task VisitProgramAsync(ProgramNode node, CancellationToken cancellationToken = default)
         {
-            indentedWriter.WriteLine("Program(");
+            indentedWriter.WriteLine("Program(".AsMemory());
             indentedWriter.Indent++;
-            Visit(node.Function);
+            await VisitAsync(node.Function, cancellationToken);
             indentedWriter.Indent--;
-            indentedWriter.WriteLine(")");
+            await indentedWriter.WriteLineAsync(")".AsMemory(), cancellationToken);
         }
 
-        public override void VisitReturn(ReturnStatementNode node)
+        public override async Task VisitReturnAsync(ReturnStatementNode node, CancellationToken cancellationToken = default)
         {
-            indentedWriter.WriteLine("Return(");
+            indentedWriter.WriteLine("Return(".AsMemory());
             indentedWriter.Indent++;
-            Visit(node.Expression);
+            await VisitAsync(node.Expression, cancellationToken);
             indentedWriter.Indent--;
-            indentedWriter.WriteLine(")");
+            indentedWriter.WriteLine(")".AsMemory());
         }
     }
 }

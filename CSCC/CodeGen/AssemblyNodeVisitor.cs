@@ -5,41 +5,41 @@ namespace CSCC.CodeGen;
 
 abstract class AssemblyNodeVisitor
 {
-    public void Visit(AssemblyNode node)
+    public async Task VisitAsync(AssemblyNode node, CancellationToken cancellationToken = default)
     {
         switch (node)
         {
-            case OperandAsmNode operand: VisitOperand(operand); break;
-            case InstructionAsmNode instruction: VisitInstruction(instruction); break;
-            case ProgramAsmNode program: VisitProgram(program); break;
-            case FunctionDefinitionAsmNode func: VisitFunctionDefinition(func); break;
+            case OperandAsmNode operand: await VisitOperand(operand, cancellationToken); break;
+            case InstructionAsmNode instruction: await VisitInstructionAsync(instruction, cancellationToken); break;
+            case ProgramAsmNode program: await VisitProgramAsync(program, cancellationToken); break;
+            case FunctionDefinitionAsmNode func: await VisitFunctionDefinitionAsync(func, cancellationToken); break;
         }
     }
 
-    protected abstract void VisitFunctionDefinition(FunctionDefinitionAsmNode func);
-    protected abstract void VisitProgram(ProgramAsmNode program);
+    protected abstract Task VisitFunctionDefinitionAsync(FunctionDefinitionAsmNode func, CancellationToken cancellationToken = default);
+    protected abstract Task VisitProgramAsync(ProgramAsmNode program, CancellationToken cancellationToken = default);
 
-    public void VisitOperand(OperandAsmNode operand)
+    public async Task VisitOperand(OperandAsmNode operand, CancellationToken cancellationToken = default)
     {
         switch (operand)
         {
-            case RegisterAsmNode register: VisitRegister(register); break;
-            case ImmediateAsmNode imm: VisitImmediate(imm); break;
+            case RegisterAsmNode register: await VisitRegisterAsync(register, cancellationToken); break;
+            case ImmediateAsmNode imm: await VisitImmediateAsync(imm, cancellationToken); break;
         }
     }
 
-    protected abstract void VisitImmediate(ImmediateAsmNode imm);
-    protected abstract void VisitRegister(RegisterAsmNode register);
+    protected abstract Task VisitImmediateAsync(ImmediateAsmNode imm, CancellationToken cancellationToken = default);
+    protected abstract Task VisitRegisterAsync(RegisterAsmNode register, CancellationToken cancellationToken = default);
 
-    public void VisitInstruction(InstructionAsmNode instruction)
+    public async Task VisitInstructionAsync(InstructionAsmNode instruction, CancellationToken cancellationToken = default)
     {
         switch (instruction)
         {
-            case MovAsmNode mov: VisitMov(mov); break;
-            case RetAsmNode ret: VisitRet(ret); break;
+            case MovAsmNode mov: await VisitMovAsync(mov, cancellationToken); break;
+            case RetAsmNode ret: await VisitRetAsync(ret, cancellationToken); break;
         }
     }
 
-    protected abstract void VisitRet(RetAsmNode ret);
-    protected abstract void VisitMov(MovAsmNode mov);
+    protected abstract Task VisitRetAsync(RetAsmNode ret, CancellationToken cancellationToken = default);
+    protected abstract Task VisitMovAsync(MovAsmNode mov, CancellationToken cancellationToken = default);
 }

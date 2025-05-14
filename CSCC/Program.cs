@@ -242,7 +242,7 @@ Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
     return Task.FromResult(Success);
 }
 
-Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, CancellationToken cancellationToken = default)
+async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Generating assembly...");
 
@@ -256,11 +256,11 @@ Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, C
 
         if (assemblyProgram == null)
         {
-            return Task.FromResult<(string?, ProgramStatus)>((null, Error(CompilerError, "No code was generated!")));
+            return (null, Error(CompilerError, "No code was generated!"));
         }
 
         var writer = new AssemblyWriter(assemblyProgram);
-        writer.Write(assembledFileName);
+        await writer.WriteAsync(assembledFileName, cancellationToken);
     }
     catch
     {
@@ -282,8 +282,7 @@ Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, C
         }
     }
 
-    return Task.FromResult<(string?, ProgramStatus)>(
-        (status == Success ? assembledFileName : null, status));
+    return (status == Success ? assembledFileName : null, status);
 }
 
 async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName, CancellationToken cancellationToken = default)
