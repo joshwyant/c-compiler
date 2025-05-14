@@ -2,6 +2,8 @@
 using System.Security;
 using CSCC;
 using CSCC.Lexing;
+using CSCC.Parsing;
+using CSCC.Parsing.Syntax;
 using static ProgramFlags;
 using static ProgramStatus;
 
@@ -14,13 +16,18 @@ string[] heading = [
 var version = "0.1";
 var numRequiredArgs = 1;
 
+var cts = new CancellationTokenSource();
+
+// Argument parsing
 var programFlags = None;
 var nonFlags = new List<string>();
 var verbose = false;
 var headerShown = false;
 var versionShown = false;
-var cts = new CancellationTokenSource();
+
+// Stage outputs
 Token[] tokens = [];
+ProgramNode? program;
 
 Console.CancelKeyPress += (sender, eventArgs) =>
 {
@@ -186,13 +193,29 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName, CancellationToke
     return Success;
 }
 
-Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = default)
+async Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Parsing...");
 
     // TODO: Actually parse.
+    var parser = new Parser(tokens);
+    program = await parser.ParseAsync(cancellationToken);
 
-    return Task.FromResult(Success);
+    if (verbose)
+    {
+        Console.WriteLine(program);
+    }
+
+    if (parser.Errors.Count != 0)
+    {
+        foreach (var error in parser.Errors)
+        {
+            Console.Error.WriteLine($"Error: {error}");
+        }
+        return Error(CompilerError, "Syntax errors found");
+    }
+
+    return Success;
 }
 
 Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)

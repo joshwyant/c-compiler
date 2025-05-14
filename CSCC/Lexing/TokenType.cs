@@ -13,4 +13,5 @@ enum TokenType
     OpenBrace,
     CloseBrace,
     Semicolon,
+    EOF,
 }

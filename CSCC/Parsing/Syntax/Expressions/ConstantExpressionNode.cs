@@ -2,7 +2,7 @@ using CSCC.Lexing.Tokens;
 
 namespace CSCC.Parsing.Syntax.Expressions;
 
-class ConstantExpressionNode(ConstantToken constantToken) : ExpressionNode
+class ConstantExpressionNode(int constant) : ExpressionNode
 {
-    public ConstantToken ConstantToken { get; } = constantToken;
+    public int Constant { get; } = constant;
 }
