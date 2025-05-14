@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Security;
 using CSCC;
+using CSCC.CodeGen;
+using CSCC.CodeGen.Syntax;
 using CSCC.Lexing;
 using CSCC.Parsing;
 using CSCC.Parsing.Syntax;
@@ -27,7 +29,8 @@ var versionShown = false;
 
 // Stage outputs
 Token[] tokens = [];
-ProgramNode? program;
+ProgramNode? program = null;
+ProgramAsmNode? assemblyProgram = null;
 
 Console.CancelKeyPress += (sender, eventArgs) =>
 {
@@ -222,7 +225,18 @@ Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Generating code...");
 
-    // TODO: Actually perform code generation.
+    if (program == null)
+    {
+        return Task.FromResult(Error(CompilerError, "No valid program!"));
+    }
+
+    var generator = new CodeGenerator(program);
+    assemblyProgram = generator.Generate();
+
+    if (verbose)
+    {
+        Console.WriteLine(assemblyProgram);
+    }
 
     return Task.FromResult(Success);
 }

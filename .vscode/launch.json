@@ -11,8 +11,8 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
             "args": [
-                "/home/josh/src/writing-a-c-compiler-tests/tests/chapter_1/invalid_parse/extra_junk.c",
-                "--parse",
+                "/home/josh/src/writing-a-c-compiler-tests/tests/chapter_1/valid/return_2.c",
+                "--codegen",
                 "--verbose",
             ],
             "cwd": "${workspaceFolder}",
