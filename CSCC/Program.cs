@@ -81,10 +81,6 @@ try
         Environment.Exit((int)status);
     }
 }
-catch (CompilerErrorException e)
-{
-    Error(CompilerError, e.Message);
-}
 catch (Exception e)
 {
     Error(UnknownError, $"Unhandled exception: {e}", exit: true);
