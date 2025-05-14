@@ -5,5 +5,5 @@ WORKSPACE_DIR=$(pwd)
 
 dotnet build
 
-cd ../writing-a-c-compiler-tests
-./test_compiler $WORKSPACE_DIR/CSCC/bin/Debug/net8.0/CSCC "$@"
+cd ../writing-a-c-compiler-tests/tests/chapter_$1/valid
+../../../test_compiler $WORKSPACE_DIR/CSCC/bin/Debug/net8.0/CSCC --chapter "$@"
