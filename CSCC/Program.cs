@@ -2,6 +2,7 @@
 using System.Security;
 using CSCC;
 using CSCC.CodeGen;
+using CSCC.CodeGen.Emit;
 using CSCC.CodeGen.Syntax;
 using CSCC.Lexing;
 using CSCC.Parsing;
@@ -241,7 +242,7 @@ Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
     return Task.FromResult(Success);
 }
 
-async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, CancellationToken cancellationToken = default)
+Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("Generating assembly...");
 
@@ -252,7 +253,14 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
     try
     {
         if (verbose) Console.WriteLine($"Creating {assembledFileName}...");
-        await File.WriteAllTextAsync(assembledFileName, string.Empty, cancellationToken);
+
+        if (assemblyProgram == null)
+        {
+            return Task.FromResult<(string?, ProgramStatus)>((null, Error(CompilerError, "No code was generated!")));
+        }
+
+        var writer = new AssemblyWriter(assemblyProgram);
+        writer.Write(assembledFileName);
     }
     catch
     {
@@ -274,7 +282,8 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
         }
     }
 
-    return (status == Success ? assembledFileName : null, status);
+    return Task.FromResult<(string?, ProgramStatus)>(
+        (status == Success ? assembledFileName : null, status));
 }
 
 async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName, CancellationToken cancellationToken = default)
@@ -322,14 +331,25 @@ async Task<ProgramStatus> AssembleAsync(string assembledFileName, string program
     }
     finally
     {
-        if (status != Success && File.Exists(assembledFileName))
+        if (File.Exists(assembledFileName))
         {
             if (verbose) Console.WriteLine($"Deleting {assembledFileName}...");
             File.Delete(assembledFileName);
         }
     }
 
-    return status;
+    if (status != Success)
+    {
+        return Error(status, "Assembly failed");
+    }
+
+    if (verbose)
+    {
+        Console.WriteLine($"Successfully created \"{programName}\".");
+    }
+
+
+    return Success;
 }
 
 void ValidateArgs()

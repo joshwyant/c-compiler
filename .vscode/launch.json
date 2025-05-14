@@ -12,7 +12,7 @@
             "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
             "args": [
                 "/home/josh/src/writing-a-c-compiler-tests/tests/chapter_1/valid/return_2.c",
-                "--codegen",
+                //"-S",
                 "--verbose",
             ],
             "cwd": "${workspaceFolder}",
