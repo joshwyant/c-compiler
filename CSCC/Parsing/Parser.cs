@@ -150,6 +150,7 @@ class Parser(IAsyncEnumerable<Token> tokens)
                     return new UnaryExpressionNode(token.Type, expr);
                 }
             case Constant:
+                await ReadAsync(cancellationToken);
                 return new ConstantExpressionNode(((ConstantToken)token).Value);
 
             default:

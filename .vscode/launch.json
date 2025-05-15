@@ -1,23 +1,23 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug CSCC",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
-            "args": [
-                "/Users/josh/src/c-compiler/book-tests/tests/chapter_2/valid/bitwise_int_min.c",
-                "--parse",
-                "--verbose",
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "internalConsole",
-            "stopAtEntry": false
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug CSCC",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
+      "args": [
+        "/Users/josh/src/c-compiler/book-tests/tests/chapter_2/valid/bitwise_int_min.c",
+        "--tacky",
+        "--verbose",
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    }
+  ]
 }

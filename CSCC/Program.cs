@@ -7,6 +7,8 @@ using CSCC.CodeGen.Syntax;
 using CSCC.Lexing;
 using CSCC.Parsing;
 using CSCC.Parsing.Syntax;
+using CSCC.TAC;
+using CSCC.TAC.Syntax;
 using static ProgramFlags;
 using static ProgramStatus;
 
@@ -31,6 +33,7 @@ var versionShown = false;
 // Stage outputs
 Token[] tokens = [];
 ProgramNode? program = null;
+ProgramTACNode? tacProgram = null;
 ProgramAsmNode? assemblyProgram = null;
 
 Console.CancelKeyPress += (sender, eventArgs) =>
@@ -147,15 +150,23 @@ async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string prepr
         return (null, status);
     }
 
-    // TODO: Now perform code generation
+    // Now generate three-address code
+    status = await TACGenAsync(cancellationToken);
+    // --tacky flag means stop after TAG generation.
+    if (status != Success || programFlags.HasFlag(StopAfterTacky))
+    {
+        return (null, status);
+    }
+
+    // Now perform code generation
     status = await CodeGenAsync(cancellationToken);
-    // --codegen flag means stop after parsing.
+    // --codegen flag means stop after code generation.
     if (status != Success || programFlags.HasFlag(StopAfterCodeGen))
     {
         return (null, status);
     }
 
-    // TODO: Now generate assembly file
+    // Now generate assembly file
     return await EmitAsync(programName, cancellationToken);
 }
 
@@ -226,6 +237,28 @@ async Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = defau
     if (verbose) Console.WriteLine("Parsing complete.");
 
     return Success;
+}
+
+Task<ProgramStatus> TACGenAsync(CancellationToken cancellationToken = default)
+{
+    if (verbose) Console.WriteLine("\nGenerating three-address code (TAC)...");
+
+    if (program == null)
+    {
+        return Task.FromResult(Error(CompilerError, "No valid program!"));
+    }
+
+    var generator = new TACGenerator(program);
+    tacProgram = generator.Generate(program);
+
+    if (verbose)
+    {
+        Console.WriteLine(tacProgram);
+    }
+
+    if (verbose) Console.WriteLine("TAC generation complete.");
+
+    return Task.FromResult(Success);
 }
 
 Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
@@ -370,6 +403,7 @@ void ValidateArgs()
         StopAfterLex,
         StopAfterParse,
         StopAfterCodeGen,
+        StopAfterTacky,
         OutputAssembly
     ];
     ProgramFlags mode = None;
@@ -461,6 +495,7 @@ ProgramStatus Usage(ProgramStatus status = Success, string? message = null, bool
     Console.WriteLine("Options:");
     Console.WriteLine("  --lex           Stop after lexical analysis");
     Console.WriteLine("  --parse         Stop after parsing");
+    Console.WriteLine("  --tacky         Stop after TAC generation");
     Console.WriteLine("  --codegen       Stop after code generation");
     Console.WriteLine("  -S              Output assembly only (no assembling/linking)");
     Console.WriteLine("  --help          Show this help message");
@@ -490,6 +525,7 @@ ProgramStatus ProcessArguments(out string sourceFileName, out string programName
         {
             "--lex" => StopAfterLex,
             "--parse" => StopAfterParse,
+            "--tacky" => StopAfterTacky,
             "--codegen" => StopAfterCodeGen,
             "-S" => OutputAssembly,
             "--quiet" => Quiet,
@@ -568,6 +604,7 @@ enum ProgramFlags
     Help = 1 << 5,
     Verbose = 1 << 6,
     GetVersion = 1 << 7,
+    StopAfterTacky = 1 << 8,
 }
 
 enum ProgramStatus

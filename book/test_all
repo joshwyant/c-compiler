@@ -12,6 +12,10 @@ for i in $(seq 1 $END); do
     ./test --chapter $i --stage lex
     echo Chapter $i parser tests 
     ./test --chapter $i --stage parse
+    if [[ $i -ne 1 ]]; then
+        echo Chapter $i tacky tests 
+        ./test --chapter $i --stage tacky
+    fi
     echo Chapter $i codegen tests
     ./test --chapter $i --stage codegen
     echo Chapter $i run tests

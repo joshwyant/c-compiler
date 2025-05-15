@@ -5,7 +5,7 @@ if [[ -z "$@" ]]; then
   echo "  For \"run\" stage:"
   echo "    ./test_run [chapter]"
   echo "  For lex, parse, or codegen stages:"
-  echo "    ./test --chapter [chapter] --stage [ lex | parse | codegen ]"
+  echo "    ./test --chapter [chapter] --stage [ lex | parse | tacky | codegen ]"
   exit
 fi
 
