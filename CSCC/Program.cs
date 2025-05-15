@@ -288,6 +288,7 @@ async Task<ProgramStatus> AssembleAsync(string assembledFileName, string program
     var status = Success;
     var program = "gcc";
     var args = $"{assembledFileName} -o {programName}";
+    if (OperatingSystem.IsMacOS()) args += " -arch x86_64";
     if (verbose) args += " --verbose";
 
     if (verbose) Console.WriteLine($"{program} {args}");

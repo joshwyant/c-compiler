@@ -13,14 +13,13 @@ set -e
 
 cd ..
 
-WORKSPACE_DIR=$(pwd)
-BOOK_TESTS_DIR=$WORKSPACE_DIR/book-tests
-COMPILER=$WORKSPACE_DIR/CSCC/bin/Debug/net8.0/CSCC
+SOLUTION_DIR=$(pwd)
+BOOK_TESTS_DIR=$SOLUTION_DIR/book-tests
+COMPILER=$SOLUTION_DIR/CSCC/bin/Debug/net8.0/CSCC
 
 if [[ "$SKIP_BUILD" -ne "1" ]]; then
-  dotnet build $SOLUTION_DIR
+  dotnet build
 fi
 
-cd $BOOK_TESTS_DIR
-
-./test_compiler $COMPILER "$@"
+cd $BOOK_TESTS_DIR/tests/chapter_$1/valid
+$BOOK_TESTS_DIR/test_compiler $COMPILER --chapter "$@" --stage run

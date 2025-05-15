@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+
+END=1
+export SKIP_BUILD=1
+
+dotnet build ..
+
+for i in $(seq 1 $END); do
+    echo Chapter $i lexer tests
+    ./test --chapter $i --stage lex
+    echo Chapter $i parser tests 
+    ./test --chapter $i --stage parse
+    echo Chapter $i codegen tests
+    ./test --chapter $i --stage codegen
+    echo Chapter $i run tests
+    ./test_run $i
+done
