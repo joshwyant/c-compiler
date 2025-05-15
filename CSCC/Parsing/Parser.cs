@@ -128,19 +128,33 @@ class Parser(IAsyncEnumerable<Token> tokens)
 
     async Task<ExpressionNode?> ExpressionAsync(CancellationToken cancellationToken = default)
     {
-        return await ConstantAsync(cancellationToken);
-    }
-
-    async Task<ConstantExpressionNode?> ConstantAsync(CancellationToken cancellationToken = default)
-    {
-        if (await ExpectAsync(Constant, ct: cancellationToken) is not ConstantToken constant)
+        var token = await PeekAsync(cancellationToken);
+        switch (token?.Type)
         {
-            errors.Add("Expected integer constant");
-            return null;
+            case Hyphen:
+            case Tilde:
+            case OpenParenthesis:
+                {
+                    await ReadAsync(cancellationToken);
+                    var expr = await ExpressionAsync(cancellationToken);
+                    if (expr == null)
+                    {
+                        errors.Add($"Expression expected after {TokenPrinter.Print(token.Type)}");
+                        return null;
+                    }
+                    if (token.Type == OpenParenthesis)
+                    {
+                        await ExpectAsync(CloseParenthesis, ct: cancellationToken);
+                        return expr;
+                    }
+                    return new UnaryExpressionNode(token.Type, expr);
+                }
+            case Constant:
+                return new ConstantExpressionNode(((ConstantToken)token).Value);
+
+            default:
+                errors.Add("Expected expression");
+                return null;
         }
-
-        return new ConstantExpressionNode(constant.Value);
     }
-
-
 }

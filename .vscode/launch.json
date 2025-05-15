@@ -11,8 +11,8 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
             "args": [
-                "/home/josh/src/writing-a-c-compiler-tests/tests/chapter_1/valid/return_2.c",
-                //"-S",
+                "/Users/josh/src/c-compiler/book-tests/tests/chapter_2/valid/bitwise_int_min.c",
+                "--parse",
                 "--verbose",
             ],
             "cwd": "${workspaceFolder}",

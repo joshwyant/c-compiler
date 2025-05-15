@@ -88,6 +88,9 @@ catch (Exception e)
 
 async Task<(string? preprocessedFileName, ProgramStatus)> PreprocessAsync(string sourceFileName, string programName, CancellationToken cancellationToken = default)
 {
+
+    if (verbose) Console.WriteLine("Starting preprocessor...");
+
     var preprocessedFileName = $"{programName}.i";
     var program = "gcc";
     // -E: Invoke the preprocessor
@@ -118,6 +121,8 @@ async Task<(string? preprocessedFileName, ProgramStatus)> PreprocessAsync(string
     {
         return (null, Error(PreprocessorFailed, $"Preprocessor failed with exit code {preprocessor.ExitCode}."));
     }
+
+    if (verbose) Console.WriteLine("Preprocessor complete.");
 
     return (preprocessedFileName, Success);
 }
@@ -156,7 +161,7 @@ async Task<(string? assembledFileName, ProgramStatus)> CompileAsync(string prepr
 
 async Task<ProgramStatus> LexAsync(string preprocessedFileName, CancellationToken cancellationToken = default)
 {
-    if (verbose) Console.WriteLine("Performing lexical analysis...");
+    if (verbose) Console.WriteLine("\nPerforming lexical analysis...");
 
     try
     {
@@ -167,7 +172,7 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName, CancellationToke
 
         if (verbose)
         {
-            Console.WriteLine($"[{string.Join(", ", tokens.Select(t => $"\"{t}\""))}]");
+            Console.WriteLine($"Tokens found: [{string.Join(", ", tokens.Select(t => $"\"{t}\""))}]");
         }
 
         if (lexer.Errors.Count != 0)
@@ -190,12 +195,14 @@ async Task<ProgramStatus> LexAsync(string preprocessedFileName, CancellationToke
         File.Delete(preprocessedFileName);
     }
 
+    if (verbose) Console.WriteLine("Lexical analysis complete.");
+
     return Success;
 }
 
 async Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = default)
 {
-    if (verbose) Console.WriteLine("Parsing...");
+    if (verbose) Console.WriteLine("\nParsing...");
 
     // TODO: Actually parse.
     var parser = new Parser(tokens);
@@ -203,6 +210,7 @@ async Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = defau
 
     if (verbose)
     {
+        Console.WriteLine("Abstract syntax tree:");
         Console.WriteLine(program);
     }
 
@@ -215,12 +223,14 @@ async Task<ProgramStatus> ParseAsync(CancellationToken cancellationToken = defau
         return Error(CompilerError, "Syntax errors found");
     }
 
+    if (verbose) Console.WriteLine("Parsing complete.");
+
     return Success;
 }
 
 Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
 {
-    if (verbose) Console.WriteLine("Generating code...");
+    if (verbose) Console.WriteLine("\nGenerating code...");
 
     if (program == null)
     {
@@ -235,12 +245,14 @@ Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
         Console.WriteLine(assemblyProgram);
     }
 
+    if (verbose) Console.WriteLine("Code generation complete.");
+
     return Task.FromResult(Success);
 }
 
 async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programName, CancellationToken cancellationToken = default)
 {
-    if (verbose) Console.WriteLine("Generating assembly...");
+    if (verbose) Console.WriteLine("\nGenerating assembly...");
 
     var assembledFileName = $"{programName}.s";
 
@@ -257,6 +269,8 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
 
         var writer = new AssemblyWriter(assemblyProgram);
         await writer.WriteAsync(assembledFileName, cancellationToken);
+
+        if (verbose) Console.WriteLine("Emit assembly complete.");
     }
     catch
     {
@@ -283,7 +297,7 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
 
 async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName, CancellationToken cancellationToken = default)
 {
-    if (verbose) Console.WriteLine("Assembling and linking...");
+    if (verbose) Console.WriteLine("\nAssembling and linking...");
 
     var status = Success;
     var program = "gcc";
@@ -344,6 +358,7 @@ async Task<ProgramStatus> AssembleAsync(string assembledFileName, string program
         Console.WriteLine($"Successfully created \"{programName}\".");
     }
 
+    if (verbose) Console.WriteLine("Assembly and linking complete.");
 
     return Success;
 }

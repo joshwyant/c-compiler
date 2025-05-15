@@ -1,5 +1,6 @@
 using System.CodeDom.Compiler;
 using System.Text;
+using CSCC.Lexing;
 using CSCC.Parsing.Syntax.Expressions;
 using CSCC.Parsing.Syntax.Statements;
 
@@ -69,6 +70,17 @@ class TreePrinter
             await VisitAsync(node.Expression, cancellationToken);
             indentedWriter.Indent--;
             indentedWriter.WriteLine(")".AsMemory());
+        }
+
+        public override async Task VisitUnaryAsync(UnaryExpressionNode node, CancellationToken cancellationToken = default)
+        {
+            await indentedWriter.WriteLineAsync("Unary(".AsMemory(), cancellationToken);
+            indentedWriter.Indent++;
+            await indentedWriter.WriteLineAsync($"operator=\"{TokenPrinter.Print(node.Operator)}\",".AsMemory(), cancellationToken);
+            await indentedWriter.WriteAsync("expression=".AsMemory(), cancellationToken);
+            await VisitAsync(node.Expression, cancellationToken);
+            indentedWriter.Indent--;
+            await indentedWriter.WriteLineAsync(")".AsMemory(), cancellationToken);
         }
     }
 }

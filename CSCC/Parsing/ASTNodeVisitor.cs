@@ -28,10 +28,12 @@ abstract class ASTNodeVisitor
         switch (node)
         {
             case ConstantExpressionNode constant: await VisitConstantAsync(constant, cancellationToken); break;
+            case UnaryExpressionNode unary: await VisitUnaryAsync(unary, cancellationToken); break;
         }
     }
     public abstract Task VisitProgramAsync(ProgramNode node, CancellationToken cancellationToken = default);
     public abstract Task VisitFunctionAsync(FunctionDefinitionNode node, CancellationToken cancellationToken = default);
     public abstract Task VisitReturnAsync(ReturnStatementNode node, CancellationToken cancellationToken = default);
     public abstract Task VisitConstantAsync(ConstantExpressionNode node, CancellationToken cancellationToken = default);
+    public abstract Task VisitUnaryAsync(UnaryExpressionNode node, CancellationToken cancellationToken = default);
 }
