@@ -16,6 +16,9 @@ static class TokenPrinter
             OpenBrace => "{",
             CloseBrace => "}",
             Semicolon => ";",
+            Tilde => "~",
+            Hyphen => "-",
+            Decrement => "--",
             _ => tokenType.ToString()
         };
 

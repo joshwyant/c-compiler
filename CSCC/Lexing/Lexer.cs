@@ -140,13 +140,23 @@ class Lexer(TextReader reader) : IAsyncEnumerable<Token>
                     '{' => OpenBrace,
                     '}' => CloseBrace,
                     ';' => Semicolon,
+                    '~' => Tilde,
+                    '-' => Hyphen,
                     _ => None,
                 };
 
-                if (tokenType == None)
+                switch (tokenType)
                 {
-                    errors.Add($"Unexpected token: {prev}");
-                    continue;
+                    case None:
+                        errors.Add($"Unexpected token: {prev}");
+                        continue;
+                    case Hyphen:
+                        if (await peek() == '-')
+                        {
+                            await move();
+                            tokenType = Decrement;
+                        }
+                        break;
                 }
                 yield return new Token(tokenType);
             }

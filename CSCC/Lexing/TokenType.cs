@@ -13,5 +13,8 @@ enum TokenType
     OpenBrace,
     CloseBrace,
     Semicolon,
+    Tilde,
+    Hyphen,
+    Decrement,
     EOF,
 }
