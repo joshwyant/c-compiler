@@ -40,66 +40,55 @@ class TACTreePrinter
         }
         public override void VisitConstantTACNode(ConstantTACNode constant)
         {
-            writer.WriteLine($"Constant({constant.Value}),".AsMemory());
+            writer.Write($"Constant({constant.Value})");
         }
 
         public override void VisitFunctionTACNode(FunctionDefinitionTACNode function)
         {
-            writer.WriteLine("FunctionDefinition(".AsMemory());
+            writer.WriteLine("FunctionDefinition(");
             writer.Indent++;
             writer.WriteLine($"name=\"{function.Name}\",");
-            writer.WriteLine("instructions=[".AsMemory());
+            writer.WriteLine("instructions=[");
             writer.Indent++;
             foreach (var instruction in function.Instructions)
             {
                 Visit(instruction);
             }
             writer.Indent--;
-            writer.WriteLine("]".AsMemory());
+            writer.WriteLine("]");
             writer.Indent--;
-            writer.WriteLine("),".AsMemory());
+            writer.WriteLine("),");
         }
 
         public override void VisitProgramTACNode(ProgramTACNode program)
         {
-            writer.WriteLine("Program(".AsMemory());
+            writer.WriteLine("Program(");
             writer.Indent++;
-            writer.Write("function=".AsMemory());
+            writer.Write("function=");
             Visit(program.Function);
             writer.Indent--;
-            writer.WriteLine(")".AsMemory());
+            writer.WriteLine(")");
         }
 
         public override void VisitReturnTACNode(ReturnInstructionTACNode instruction)
         {
-            writer.WriteLine("Return(".AsMemory());
-            writer.Indent++;
-            writer.Write("value=".AsMemory());
+            writer.Write("Return(");
             Visit(instruction.Value);
-            writer.Indent--;
-            writer.WriteLine("),".AsMemory());
+            writer.WriteLine("),");
         }
 
         public override void VisitUnaryTACNode(UnaryInstructionTACNode instruction)
         {
-            writer.WriteLine("Unary(".AsMemory());
-            writer.Indent++;
-            writer.WriteLine($"operator=\"{TokenPrinter.Print(instruction.Operator)}\"".AsMemory());
-            writer.Write("source=".AsMemory());
+            writer.Write($"Unary(\"{TokenPrinter.Print(instruction.Operator)}\", ");
             Visit(instruction.Source);
-            writer.Write("destination=".AsMemory());
+            writer.Write(", ");
             Visit(instruction.Destination);
-            writer.Indent--;
-            writer.WriteLine("),".AsMemory());
+            writer.WriteLine("),");
         }
 
         public override void VisitVarTACNode(VarTACNode variable)
         {
-            writer.WriteLine("Var(".AsMemory());
-            writer.Indent++;
-            writer.WriteLine($"name=\"{variable.Name}\"".AsMemory());
-            writer.Indent--;
-            writer.WriteLine("),".AsMemory());
+            writer.Write($"Var(\"{variable.Name}\")");
         }
     }
 }
