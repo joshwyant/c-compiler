@@ -12,7 +12,7 @@
       "program": "${workspaceFolder}/CSCC/bin/Debug/net8.0/CSCC",
       "args": [
         "/Users/josh/src/c-compiler/book-tests/tests/chapter_2/valid/bitwise_int_min.c",
-        "--tacky",
+        //"--tacky",
         "--verbose",
       ],
       "cwd": "${workspaceFolder}",

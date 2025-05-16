@@ -45,9 +45,9 @@ class AssemblyWriter(ProgramAsmNode program)
             }
         }
 
-        protected override Task VisitAllocateStackAsync(AllocateStackAsmNode alloc, CancellationToken cancellationToken = default)
+        protected override async Task VisitAllocateStackAsync(AllocateStackAsmNode alloc, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await indentedWriter.WriteLineAsync($"subq    ${alloc.StackFrameSize}, %rsp".AsMemory(), cancellationToken);
         }
 
         protected override async Task VisitFunctionDefinitionAsync(FunctionDefinitionAsmNode func, CancellationToken cancellationToken = default)
@@ -60,6 +60,9 @@ class AssemblyWriter(ProgramAsmNode program)
             indentedWriter.Indent--;
             await indentedWriter.WriteLineAsync($"{funcName}:".AsMemory(), cancellationToken);
             indentedWriter.Indent++;
+
+            await indentedWriter.WriteLineAsync("pushq   %rbp".AsMemory(), cancellationToken);
+            await indentedWriter.WriteLineAsync("movq    %rsp, %rbp".AsMemory(), cancellationToken);
             foreach (var instruction in func.Instructions)
             {
                 await VisitAsync(instruction, cancellationToken);
@@ -74,11 +77,11 @@ class AssemblyWriter(ProgramAsmNode program)
 
         protected override async Task VisitMovAsync(MovAsmNode mov, CancellationToken cancellationToken = default)
         {
-            indentedWriter.Write($"movl ".AsMemory());
+            await indentedWriter.WriteAsync($"movl    ".AsMemory(), cancellationToken);
             await VisitAsync(mov.Source, cancellationToken);
-            indentedWriter.Write(", ".AsMemory());
+            await indentedWriter.WriteAsync(", ");
             await VisitAsync(mov.Destination, cancellationToken);
-            indentedWriter.WriteLine();
+            await indentedWriter.WriteLineAsync();
         }
 
         protected override async Task VisitProgramAsync(ProgramAsmNode program, CancellationToken cancellationToken = default)
@@ -88,27 +91,42 @@ class AssemblyWriter(ProgramAsmNode program)
 
         protected override Task VisitPseudoOperandAsync(PseudoAsmNode ps, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            throw new InvalidOperationException("No pseudo operands in final assembly");
         }
 
         protected override async Task VisitRegisterAsync(RegisterAsmNode register, CancellationToken cancellationToken = default)
         {
-            await indentedWriter.WriteAsync("%eax".AsMemory(), cancellationToken);
+            await indentedWriter.WriteAsync(
+                (register.Register switch
+                {
+                    AssemblyRegister.AX => "%eax",
+                    AssemblyRegister.R10 => "%r10d",
+                    _ => throw new NotImplementedException($"No register mapping defined for register {register.Register}")
+                }).AsMemory(), cancellationToken);
         }
 
         protected override async Task VisitRetAsync(RetAsmNode ret, CancellationToken cancellationToken = default)
         {
+            await indentedWriter.WriteLineAsync("movq    %rbp, %rsp".AsMemory(), cancellationToken);
+            await indentedWriter.WriteLineAsync("popq    %rbp".AsMemory(), cancellationToken);
             await indentedWriter.WriteLineAsync("ret".AsMemory(), cancellationToken);
         }
 
-        protected override Task VisitStackOperandAsync(StackAsmNode stack, CancellationToken cancellationToken = default)
+        protected override async Task VisitStackOperandAsync(StackAsmNode stack, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await indentedWriter.WriteAsync($"{stack.Position}(%rbp)".AsMemory(), cancellationToken);
         }
 
-        protected override Task VisitUnaryAsync(UnaryAsmNode unary, CancellationToken cancellationToken = default)
+        protected override async Task VisitUnaryAsync(UnaryAsmNode unary, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            await indentedWriter.WriteAsync($"{(unary.Operator switch
+            {
+                AssemblyOperator.Neg => "negl",
+                AssemblyOperator.Not => "notl",
+                _ => throw new NotImplementedException($"No instruction mnemonic defined for operator {unary.Operator}")
+            }).PadRight(8)}".AsMemory(), cancellationToken);
+            await VisitAsync(unary.Operand, cancellationToken);
+            await indentedWriter.WriteLineAsync();
         }
     }
 }
