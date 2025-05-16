@@ -142,6 +142,10 @@ class Lexer(TextReader reader) : IAsyncEnumerable<Token>
                     ';' => Semicolon,
                     '~' => Tilde,
                     '-' => Hyphen,
+                    '+' => Plus,
+                    '*' => Asterisk,
+                    '/' => ForwardSlash,
+                    '%' => Percent,
                     _ => None,
                 };
 

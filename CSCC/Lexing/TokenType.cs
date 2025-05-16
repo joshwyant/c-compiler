@@ -16,5 +16,9 @@ enum TokenType
     Tilde,
     Hyphen,
     Decrement,
+    Plus,
+    Asterisk,
+    ForwardSlash,
+    Percent,
     EOF,
 }
