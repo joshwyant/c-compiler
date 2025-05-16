@@ -1,7 +1,7 @@
 using System.CodeDom.Compiler;
-using System.Threading.Tasks;
 using CSCC.CodeGen.Syntax;
 using CSCC.CodeGen.Syntax.Instructions;
+using CSCC.CodeGen.Syntax.Operands;
 
 namespace CSCC.CodeGen.Emit;
 
@@ -45,6 +45,11 @@ class AssemblyWriter(ProgramAsmNode program)
             }
         }
 
+        protected override Task VisitAllocateStackAsync(AllocateStackAsmNode alloc, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         protected override async Task VisitFunctionDefinitionAsync(FunctionDefinitionAsmNode func, CancellationToken cancellationToken = default)
         {
             var funcName = OperatingSystem.IsMacOS() ? $"_{func.Name}" : func.Name;
@@ -81,6 +86,11 @@ class AssemblyWriter(ProgramAsmNode program)
             await VisitAsync(program.Function, cancellationToken);
         }
 
+        protected override Task VisitPseudoOperandAsync(PseudoAsmNode ps, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         protected override async Task VisitRegisterAsync(RegisterAsmNode register, CancellationToken cancellationToken = default)
         {
             await indentedWriter.WriteAsync("%eax".AsMemory(), cancellationToken);
@@ -89,6 +99,16 @@ class AssemblyWriter(ProgramAsmNode program)
         protected override async Task VisitRetAsync(RetAsmNode ret, CancellationToken cancellationToken = default)
         {
             await indentedWriter.WriteLineAsync("ret".AsMemory(), cancellationToken);
+        }
+
+        protected override Task VisitStackOperandAsync(StackAsmNode stack, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override Task VisitUnaryAsync(UnaryAsmNode unary, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

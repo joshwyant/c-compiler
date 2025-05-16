@@ -2,8 +2,8 @@ using CSCC.CodeGen.Syntax.Instructions;
 
 namespace CSCC.CodeGen.Syntax;
 
-class FunctionDefinitionAsmNode(string name, InstructionAsmNode[] instructions) : AssemblyNode
+class FunctionDefinitionAsmNode(string name, List<InstructionAsmNode> instructions) : AssemblyNode
 {
     public string Name { get; } = name;
-    public InstructionAsmNode[] Instructions { get; } = instructions;
+    public List<InstructionAsmNode> Instructions { get; } = instructions;
 }

@@ -1,4 +1,4 @@
-namespace CSCC.CodeGen.Syntax;
+namespace CSCC.CodeGen.Syntax.Operands;
 
 abstract class OperandAsmNode : AssemblyNode
 {

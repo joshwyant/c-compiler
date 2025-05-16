@@ -1,7 +1,7 @@
 using System.CodeDom.Compiler;
 using System.Text;
-using System.Threading.Tasks;
 using CSCC.CodeGen.Syntax.Instructions;
+using CSCC.CodeGen.Syntax.Operands;
 
 namespace CSCC.CodeGen.Syntax;
 
@@ -35,6 +35,11 @@ class AsmTreePrinter
             var str = sb.ToString();
             sb.Clear();
             return str;
+        }
+
+        protected override async Task VisitAllocateStackAsync(AllocateStackAsmNode alloc, CancellationToken cancellationToken = default)
+        {
+            await indentedWriter.WriteLineAsync($"AllocateStack({alloc.StackFrameSize})".AsMemory(), cancellationToken);
         }
 
         protected override async Task VisitFunctionDefinitionAsync(FunctionDefinitionAsmNode func, CancellationToken cancellationToken = default)
@@ -73,14 +78,29 @@ class AsmTreePrinter
             await indentedWriter.WriteLineAsync(")".AsMemory(), cancellationToken);
         }
 
+        protected override async Task VisitPseudoOperandAsync(PseudoAsmNode ps, CancellationToken cancellationToken = default)
+        {
+            await indentedWriter.WriteAsync($"Pseudo({ps.Identifier})".AsMemory(), cancellationToken);
+        }
+
         protected override async Task VisitRegisterAsync(RegisterAsmNode register, CancellationToken cancellationToken = default)
         {
-            await indentedWriter.WriteAsync("Register".AsMemory(), cancellationToken);
+            await indentedWriter.WriteAsync($"Register({register.Register})".AsMemory(), cancellationToken);
         }
 
         protected override async Task VisitRetAsync(RetAsmNode ret, CancellationToken cancellationToken = default)
         {
             await indentedWriter.WriteLineAsync("Ret".AsMemory(), cancellationToken);
+        }
+
+        protected override async Task VisitStackOperandAsync(StackAsmNode stack, CancellationToken cancellationToken = default)
+        {
+            await indentedWriter.WriteAsync($"Stack({stack.Position})".AsMemory(), cancellationToken);
+        }
+
+        protected override async Task VisitUnaryAsync(UnaryAsmNode unary, CancellationToken cancellationToken = default)
+        {
+            await indentedWriter.WriteLineAsync($"Unary({unary.Operator}, {unary.Operand})".AsMemory(), cancellationToken);
         }
     }
 }

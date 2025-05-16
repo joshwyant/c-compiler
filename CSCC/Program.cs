@@ -265,12 +265,12 @@ Task<ProgramStatus> CodeGenAsync(CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("\nGenerating code...");
 
-    if (program == null)
+    if (tacProgram == null)
     {
-        return Task.FromResult(Error(CompilerError, "No valid program!"));
+        return Task.FromResult(Error(CompilerError, "No valid three-address code!"));
     }
 
-    var generator = new CodeGenerator(program);
+    var generator = new CodeGenerator(tacProgram);
     assemblyProgram = generator.Generate();
 
     if (verbose)
@@ -302,6 +302,11 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
 
         var writer = new AssemblyWriter(assemblyProgram);
         await writer.WriteAsync(assembledFileName, cancellationToken);
+
+        if (verbose)
+        {
+            Console.WriteLine(File.ReadAllText(assembledFileName));
+        }
 
         if (verbose) Console.WriteLine("Emit assembly complete.");
     }
