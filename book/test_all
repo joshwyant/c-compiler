@@ -19,5 +19,5 @@ for i in $(seq 1 $END); do
     echo Chapter $i codegen tests
     ./test --chapter $i --stage codegen
     echo Chapter $i run tests
-    ./test_run $i
+    ./test --chapter $i --stage run
 done

@@ -46,7 +46,7 @@ try
 {
     string? preprocessedFileName, assembledFileName;
 
-    var status = ProcessArguments(out var sourceFileName, out var programName);
+    var status = ProcessArguments(out var sourceFileName, out var programName, out var outputFileName);
     if (status != Success)
     {
         Environment.Exit((int)status);
@@ -78,7 +78,7 @@ try
 
     //
     // Step 3: Assemble and link
-    status = await AssembleAsync(assembledFileName, programName, cts.Token);
+    status = await AssembleAsync(assembledFileName, programName, outputFileName, cts.Token);
     if (status != Success)
     {
         Environment.Exit((int)status);
@@ -333,13 +333,13 @@ async Task<(string? assembledFileName, ProgramStatus)> EmitAsync(string programN
     return (status == Success ? assembledFileName : null, status);
 }
 
-async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName, CancellationToken cancellationToken = default)
+async Task<ProgramStatus> AssembleAsync(string assembledFileName, string programName, string outputFileName, CancellationToken cancellationToken = default)
 {
     if (verbose) Console.WriteLine("\nAssembling and linking...");
 
     var status = Success;
     var program = "gcc";
-    var args = $"{assembledFileName} -o {programName}";
+    var args = $"{assembledFileName} -o {outputFileName}";
     if (OperatingSystem.IsMacOS()) args += " -arch x86_64";
     if (verbose) args += " --verbose";
 
@@ -516,12 +516,13 @@ ProgramStatus Usage(ProgramStatus status = Success, string? message = null, bool
     return status;
 }
 
-ProgramStatus ProcessArguments(out string sourceFileName, out string programName)
+ProgramStatus ProcessArguments(out string sourceFileName, out string programName, out string outputFileName)
 {
     // We'll figure out the source file name and set the program
     // name to the same filename but without the extension.
     sourceFileName = string.Empty;
     programName = string.Empty;
+    outputFileName = string.Empty;
 
     // Get the flags
     foreach (var arg in args)
@@ -584,12 +585,13 @@ ProgramStatus ProcessArguments(out string sourceFileName, out string programName
         return Usage(InvalidFilename, $"File name '{sourceFileName}' is invalid.");
     }
 
-    if (!fi.Exists)
+    if (!fi.Exists || fi.DirectoryName == null)
     {
         return Usage(FileNotFound, $"Source file '{sourceFileName}' does not exist.");
     }
 
     programName = Path.GetFileNameWithoutExtension(sourceFileName);
+    outputFileName = Path.Combine(fi.DirectoryName, programName);
 
     // Check for conflicting flags, etc.
     ValidateArgs();
